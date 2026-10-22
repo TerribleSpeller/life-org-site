@@ -229,12 +229,13 @@ export default function Home() {
                       const selectDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
                       const numberCompleted = currentData[selectDate]?.tasks?.filter((task) => task.completed).length ?? 0;
                       const numberOfTasks = currentData[selectDate]?.tasks?.length ?? 0;
+                      const isPastOrPresent = date <= new Date();
                       const resultingColour = determineBackground(numberOfTasks, numberCompleted);
                       return (
                         <td
                           key={selectDate}
                           className={
-                            `${isCurrentMonth ? "" : styles.adjacentMonthDay} ${resultingColour}`
+                            `${isCurrentMonth ? "" : styles.adjacentMonthDay}  ${isPastOrPresent ? resultingColour : ""}`
                           }
                           onClick={() => { getData(selectDate) }}
                         >
