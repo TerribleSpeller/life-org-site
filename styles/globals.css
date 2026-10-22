@@ -45,4 +45,46 @@ a {
 
 /*Background Colours*/
 
+.success-color-bg {
+  background-color: #8cc971;
+}
 
+.notdone-color-bg {
+  background-color: #d77777;
+}
+
+/* Good Job or Not? */
+.hundred-done {
+  background-color: #6f9ae2;
+}
+.eighty-five-done {
+  background-color: #a4c2f4;
+}
+
+.seventy-done {
+  background-color: #a2c4c9;
+}
+
+.fifty-five-done {
+  background-color: #b6d7a8;
+}
+
+.fourty-done {
+  background-color: #ffe599;
+}
+
+.twenty-five-done {
+  background-color: #f9cb9c;
+}
+
+.fifteen-done {
+  background-color: #ea9999;
+}
+
+.none-done {
+  background-color: #dd7e6b;
+}
+
+.sick {
+  background-color: #d5a6bd;
+}

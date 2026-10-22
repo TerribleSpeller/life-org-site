@@ -50,14 +50,15 @@ export default function Home() {
       const storedData = localStorage.getItem(localStorageKey);
       if (storedData) {
         const parsedData = JSON.parse(storedData);
-        setCurrentData(parsedData)
+
+        setCurrentData(parsedData);
+        localStorage.setItem(localStorageKey, JSON.stringify(parsedData));
       } else {
         const today = new Date();
         const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
         const baseStorage = {
           [todayDate]: {
             tasks: [],
-            completed: []
           },
         };
         localStorage.setItem(localStorageKey, JSON.stringify(baseStorage));
@@ -69,7 +70,7 @@ export default function Home() {
       const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const baseStorage = {
         [todayDate]: {
-          tasks: [],
+          tasks: {},
         },
       };
       localStorage.setItem(localStorageKey, JSON.stringify(baseStorage));
@@ -83,7 +84,7 @@ export default function Home() {
     if (!loaded) return;
     //Get the data of that date.
     try {
-      const dateData = currentData[date] ?? { tasks: [], completed: [] };
+      const dateData = currentData[date] ?? { tasks: [] };
       const updatedData = {
         ...currentData,
         [date]: dateData,
@@ -102,21 +103,77 @@ export default function Home() {
   }
 
   function addTask(date, newTask) {
+    const task = {
+      id: crypto.randomUUID(),
+      text: newTask,
+      completed: false,
+    };
     const newData = {
       ...currentData,
       [date]: {
-        tasks: [...(currentData[date]?.tasks || []), newTask],
-        completed: currentData[date]?.completed || [],
+        tasks: [...(currentData[date]?.tasks || []), task],
       },
     }
 
     setCurrentData(newData);
-    setCurrentSelectedData(newData);
+    setCurrentSelectedData(newData[date]);
+    localStorage.setItem(localStorageKey, JSON.stringify(newData));
+  }
+
+  function toggleTaskCompleted(date, taskId) {
+    let addOrRemove = 0;
+    if (currentData[date].tasks.filter(task => task.id === taskId).completed === undefined) {
+      addOrRemove = 1;
+    } else if (currentData[date].tasks.filter(task => task.id === taskId).completed === true) {
+      addOrRemove = -1;
+    }
+    const completedCount = currentData[date].tasks.filter((task) => task.completed).length + addOrRemove;
+    const newData = {
+      ...currentData,
+      [date]: {
+        ...currentData[date],
+        completed: completedCount,
+        tasks: currentData[date].tasks.map((task) =>
+          task.id === taskId ? { ...task, completed: !task.completed } : task,
+        ),
+      },
+    };
+
+    setCurrentData(newData);
+    setCurrentSelectedData(newData[date]);
     localStorage.setItem(localStorageKey, JSON.stringify(newData));
   }
 
   //TODO: Fix re-rendering issues
-  
+
+  function determineBackground(numOfTasks, numOfComplete) {
+    if (numOfTasks === 0) {
+      return "none-done";
+    }
+    const ratio = numOfComplete / numOfTasks;
+    const convert = Math.round(ratio * 7);
+    
+    switch (convert) {
+      case 0:
+        return "none-done";
+      case 1:
+        return "fifteen-done";
+      case 2:
+        return "twenty-five-done";
+      case 3:
+        return "fourty-done";
+      case 4:
+        return "fifty-five-done";
+      case 5:
+        return "seventy-done";
+      case 6:
+        return "eighty-five-done";
+      case 7: 
+        return "hundred-done";
+      default:
+        return "none-done";
+    }
+  }
 
   return (
     <>
@@ -170,11 +227,14 @@ export default function Home() {
                         date.getMonth() === currentMonth.getMonth() &&
                         date.getFullYear() === currentMonth.getFullYear();
                       const selectDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+                      const numberCompleted = currentData[selectDate]?.tasks?.filter((task) => task.completed).length ?? 0;
+                      const numberOfTasks = currentData[selectDate]?.tasks?.length ?? 0;
+                      const resultingColour = determineBackground(numberOfTasks, numberCompleted);
                       return (
                         <td
                           key={selectDate}
                           className={
-                            isCurrentMonth ? "" : styles.adjacentMonthDay
+                            `${isCurrentMonth ? "" : styles.adjacentMonthDay} ${resultingColour}`
                           }
                           onClick={() => { getData(selectDate) }}
                         >
@@ -198,20 +258,20 @@ export default function Home() {
 
                 </input>
               </div>
-              <div className="col-2 border border-1 rounded p-2 mb-2 bg-secondary text-white" onClick={addTask(currentDay, newTaskInput)} >
+              <div className="col-2 border border-1 rounded p-2 mb-2 bg-secondary text-white" onClick={() => addTask(currentDay, newTaskInput)} >
                 <span>+ Add Task </span>
               </div>
             </div>
             <div className="col">
               {
                 currentSelectedData?.tasks?.length > 0 ?
-                  currentSelectedData?.tasks?.map((task, index) => (
-                    <div key={index} className="row border border-1 rounded p-2 mb-2">
-                      <div className="col col-10">
-                        <span>{task}</span>
+                  currentSelectedData?.tasks?.map((task) => (
+                    <div key={task.id} className={`row border border-1 p-2 mb-2 ${task.completed ? "success-color-bg" : "notdone-color-bg"}`}>
+                      <div className="col col-10 ">
+                        <span>{task.text}</span>
                       </div>
-                      <div className="col-2 border border-1 rounded p-2 mb-2 bg-secondary text-white" onClick={() => { }}>
-                        <span>Done </span>
+                      <div className="col-2 border border-1 rounded p-2 mb-2 bg-secondary text-white" onClick={() => toggleTaskCompleted(currentDay, task.id)}>
+                        <span>{task.completed ? "Undo" : "Done"}</span>
                       </div>
                     </div>
                   )) :
